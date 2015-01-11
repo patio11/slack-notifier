@@ -9,13 +9,13 @@ describe Slack::Notifier do
     end
 
     it "sets the default_payload options" do
-      subject = described_class.new 'http://example.com', channel: 'foo'
+      subject = described_class.new 'http://example.com', {:channel => 'foo'}
       expect( subject.channel ).to eq 'foo'
     end
 
     it "sets a custom http client" do
       client  = double("CustomClient")
-      subject = described_class.new 'http://example.com', http_client: client
+      subject = described_class.new 'http://example.com', {:http_client => client}
       expect( subject.http_client ).to eq client
     end
   end
@@ -26,18 +26,16 @@ describe Slack::Notifier do
     end
 
     it "passes the message through LinkFormatter" do
-      expect( Slack::Notifier::LinkFormatter ).to receive(:format)
-                                              .with("the message")
+      expect( Slack::Notifier::LinkFormatter ).to receive(:format).with("the message")
 
-      described_class.new('http://example.com').ping "the message", channel: 'foo'
+      described_class.new('http://example.com').ping "the message", :channel => 'foo'
     end
 
     context "with a default channel set" do
 
       before :each do
         @endpoint_double = instance_double "URI::HTTP"
-        allow( URI ).to receive(:parse)
-                    .and_return(@endpoint_double)
+        allow( URI ).to receive(:parse).and_return(@endpoint_double)
         subject.channel = '#default'
       end
 
@@ -48,19 +46,17 @@ describe Slack::Notifier do
       end
 
       it "uses default channel" do
-        expect( Slack::Notifier::DefaultHTTPClient ).to receive(:post)
-                          .with @endpoint_double,
-                                payload: '{"text":"the message","channel":"#default"}'
+        expect( Slack::Notifier::DefaultHTTPClient ).to receive(:post).with @endpoint_double,
+                                :payload => '{"text":"the message","channel":"#default"}'
 
         subject.ping "the message"
       end
 
       it "allows override channel to be set" do
-        expect( Slack::Notifier::DefaultHTTPClient ).to receive(:post)
-                          .with @endpoint_double,
-                                payload: '{"text":"the message","channel":"new"}'
+        expect( Slack::Notifier::DefaultHTTPClient ).to receive(:post).with @endpoint_double,
+                                :payload => '{"text":"the message","channel":"new"}'
 
-        subject.ping "the message", channel: "new"
+        subject.ping "the message", :channel => "new"
       end
 
     end
@@ -68,30 +64,24 @@ describe Slack::Notifier do
     context "with default webhook" do
       it "posts with the correct endpoint & data" do
           @endpoint_double = instance_double "URI::HTTP"
-          allow( URI ).to receive(:parse)
-                      .with("http://example.com")
-                      .and_return(@endpoint_double)
+          allow( URI ).to receive(:parse).with("http://example.com").and_return(@endpoint_double)
 
-          expect( Slack::Notifier::DefaultHTTPClient ).to receive(:post)
-                            .with @endpoint_double,
-                                  payload: '{"text":"the message","channel":"channel"}'
+          expect( Slack::Notifier::DefaultHTTPClient ).to receive(:post).with @endpoint_double,
+                                  :payload => '{"text":"the message","channel":"channel"}'
 
-          described_class.new("http://example.com").ping "the message", channel: "channel"
+          described_class.new("http://example.com").ping "the message", :channel => "channel"
       end
     end
 
     context "with a custom http_client set" do
       it "uses it" do
         endpoint_double = instance_double "URI::HTTP"
-        allow( URI ).to receive(:parse)
-                    .with("http://example.com")
-                    .and_return(endpoint_double)
+        allow( URI ).to receive(:parse).with("http://example.com").and_return(endpoint_double)
         client = double("CustomClient")
-        expect( client ).to receive(:post)
-                        .with endpoint_double,
-                        payload: '{"text":"the message"}'
+        expect( client ).to receive(:post).with endpoint_double,
+                        :payload => '{"text":"the message"}'
 
-        described_class.new('http://example.com',http_client: client).ping "the message"
+        described_class.new('http://example.com', :http_client => client).ping "the message"
       end
     end
   end
